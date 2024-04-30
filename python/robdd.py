@@ -6,7 +6,6 @@ from sys import maxsize
 
 
 class Robdd:
-
     # static helper methods
     @staticmethod
     def true():
@@ -31,7 +30,6 @@ class Robdd:
         return r
 
     # instance definition
-
     def __init__(self):
         self.clear()
 
