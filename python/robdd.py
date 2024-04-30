@@ -34,41 +34,34 @@ class Robdd:
         self.clear()
 
     def clear(self):
+        # T & H tables, T for tree tracing, H for node memory
         self.items = []
         self.inverse = {}
 
+        # these are just for stats
         self.variables = []
-
         self.insert_attempts = 0
         self.insert_distinct = 0
-
+        # this is to init the T table like suggested in report, 
+        # though we did not use it afterwards in the code...
         self.root = None  # root of the robdd tree
-
-        self._insert(maxsize, None, None)  # inserts a node for True
         self._insert(maxsize, None, None)  # inserts a node for False
+        self._insert(maxsize, None, None)  # inserts a node for True
 
     # builds a structure from a Ite expression
-    def build(self, expression, clear=False):
-
+    def build(self, expression):
         if not isinstance(expression, Ite):
             raise "Expression is not an Ite class object"
-
-        if clear == True:
-            self.clear()
-
         self.root = self._build(expression)
 
-        return self.root
-
     def _build(self, expression):
-
+        # recursive call to build the tree, make from bottom up
         inserting_t = (
             expression.t if expression.t_is_bool() else self._build(expression.t)
         )
         inserting_f = (
             expression.f if expression.f_is_bool() else self._build(expression.f)
         )
-
         return self.insert(expression.i, inserting_t, inserting_f)
 
     # inserts nodes w/ redundancy check
@@ -83,35 +76,28 @@ class Robdd:
         if t == f:
             # the t and the f children are equal,
             # so the i variable can be ignored
-            self.root = t
             return t
 
         # check if this is a redundant node
-        n = self.find_by_inverse(i, t, f)
+        n = self.lookup(i, t, f)
 
         if n == None:
             n = self._insert(i, t, f)
             self.insert_distinct += 1
-
-        self.root = n
-
         return n
 
     def insert_variable(self, i):
         if i in self.variables:
             return
-
         self.variables.append(i)
 
     def _insert(self, v, t, f):
         index = len(self.items)
-
         self.items.append((v, t, f))
         self.inverse[(v, t, f)] = index
-
         return index
 
-    def find_by_inverse(self, v, t, f):
+    def lookup(self, v, t, f):
         return self.inverse[(v, t, f)] if (v, t, f) in self.inverse else None
 
     def __str__(self):
