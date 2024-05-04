@@ -41,7 +41,6 @@ class Apply:
         # print("_app {}, {}".format(a_index, b_index)
         # print("   A is leaf:", self._is_leaf(a_index)
         # print("   B is leaf:", self._is_leaf(b_index)
-
         i_a, t_a, f_a = self.expression_a.items[a_index]
         i_b, t_b, f_b = self.expression_b.items[b_index]
         # here, we used the index number to judge if a node is terminal, 
@@ -52,20 +51,20 @@ class Apply:
 
         elif i_a == i_b:
             # print("   operating nodes"
-            result = self.result.insert(
+            result = self.result.make(
                 i_a, self._app(t_a, t_b), self._app(f_a, f_b)
             )
 
         elif i_a < i_b:
             # print("   advancing A"
-            result = self.result.insert(
+            result = self.result.make(
                 i_a, self._app(t_a, b_index), self._app(f_a, b_index)
             )
 
         # elif i_a > i_b:
         else:
             # print("   advancing B"
-            result = self.result.insert(
+            result = self.result.make(
                 i_b, self._app(a_index, t_b), self._app(a_index, f_b)
             )
 

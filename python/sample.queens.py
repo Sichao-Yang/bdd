@@ -8,12 +8,12 @@ from operators import Bdd
 
 
 def queens(n):
-    solution = Robdd.true()
+    solution = Robdd.init_build_true()
     # create the rule "there must be at least one queen at each line"
     for j in range(1, n + 1):
-        line = Robdd.false()
+        line = Robdd.init_build_false()
         for i in range(1, n + 1):
-            queen = Robdd.make_x(index_of(i, j))
+            queen = Robdd.init_build_x(index_of(i, j))
             line = app(line, Bdd.OR, queen)
         solution = app(solution, Bdd.AND, line)
 
@@ -21,7 +21,7 @@ def queens(n):
     not_expressions = {}
     for j in range(1, n + 1):
         for i in range(1, n + 1):
-            not_expressions[(i, j)] = Robdd.make_not_x(index_of(i, j))
+            not_expressions[(i, j)] = Robdd.init_build_not_x(index_of(i, j))
 
     # create conditions for each position
     for j in range(1, n + 1):
@@ -33,9 +33,9 @@ def queens(n):
 
 
 def queen_conditions(not_x, i, j, n):
-    queen = Robdd.make_x(index_of(i, j))
+    queen = Robdd.init_build_x(index_of(i, j))
     # creates the rule "none in the same column"
-    a = Robdd.true()
+    a = Robdd.init_build_true()
     for y in range(1, n + 1):
         if y == j:
             continue
@@ -43,7 +43,7 @@ def queen_conditions(not_x, i, j, n):
         a = app(a, Bdd.AND, a_)
 
     # creates the rule "none in the same line"
-    b = Robdd.true()
+    b = Robdd.init_build_true()
     for x in range(1, n + 1):
         if x == i:
             continue
@@ -51,7 +51,7 @@ def queen_conditions(not_x, i, j, n):
         b = app(b, Bdd.AND, b_)
 
     # creates the rule "none in the diagonals"
-    c = Robdd.true()
+    c = Robdd.init_build_true()
     x = 1
     while (i - x) > 0 and (j - x) > 0:
         c_ = app(queen, Bdd.IMPL, not_x[(i - x, j - x)])
@@ -63,7 +63,7 @@ def queen_conditions(not_x, i, j, n):
         c = app(c, Bdd.AND, c_)
         x += 1
 
-    d = Robdd.true()
+    d = Robdd.init_build_true()
     x = 1
     while (i - x) > 0 and (j + x) <= n:
         d_ = app(queen, Bdd.IMPL, not_x[(i - x, j + x)])
@@ -84,6 +84,16 @@ def index_of(i, j):
     return i + ((j - 1) * n)
 
 
+def display_solution(sol, n):
+    for k, v in sol.items():
+        if v:
+            sign = '+'
+        else:
+            sign = 'o'
+        print("{} ".format(sign), end="")
+        if (k-1) % n == 0:
+            print()
+            
 if __name__ == "__main__":
     from time import time
 
@@ -92,9 +102,14 @@ if __name__ == "__main__":
         result = queens(n)
         elapsed = time() - start
 
+        if n == 8:
+            assert result.solutions_len() == 92
+        
         print("N =".format(n))
         print("   solutions       ={}".format(result.solutions_len()))
         print("   elapsed time    = {:.2f}s".format(elapsed))
         print("   variables       ={}".format(len(result.variables)))
         print("   nodes (reduced) ={}".format(result.insert_distinct))
         print("   nodes (attempts)={}".format(result.insert_attempts))
+        print("   resolution: ")
+        display_solution(result.get_solutions()[0], n)

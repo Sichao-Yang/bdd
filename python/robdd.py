@@ -8,23 +8,23 @@ from sys import maxsize
 class Robdd:
     # static helper methods
     @staticmethod
-    def true():
-        return Robdd.make(Ite(1, 1, 1))
+    def init_build_true():
+        return Robdd.init_build(Ite(1, 1, 1))
 
     @staticmethod
-    def false():
-        return Robdd.make(Ite(1, 0, 0))
+    def init_build_false():
+        return Robdd.init_build(Ite(1, 0, 0))
 
     @staticmethod
-    def make_x(i):
-        return Robdd.make(Ite(i, 1, 0))
+    def init_build_x(i):
+        return Robdd.init_build(Ite(i, 1, 0))
 
     @staticmethod
-    def make_not_x(i):
-        return Robdd.make(Ite(i, 0, 1))
+    def init_build_not_x(i):
+        return Robdd.init_build(Ite(i, 0, 1))
 
     @staticmethod
-    def make(_ite):
+    def init_build(_ite):
         r = Robdd()
         r.build(_ite)
         return r
@@ -34,7 +34,8 @@ class Robdd:
         self.clear()
 
     def clear(self):
-        # T & H tables, T for tree tracing, H for node memory
+        # T & H tables, T for recording the order of node initializaiton, 
+        # H used to check if a ite has been made before
         self.items = []
         self.inverse = {}
 
@@ -42,11 +43,11 @@ class Robdd:
         self.variables = []
         self.insert_attempts = 0
         self.insert_distinct = 0
-        # this is to init the T table like suggested in report, 
-        # though we did not use it afterwards in the code...
+        # this is to init the T table like suggested in report
+        # root is the index of items and it represents the root of the DAG
         self.root = None  # root of the robdd tree
-        self._insert(maxsize, None, None)  # inserts a node for False
-        self._insert(maxsize, None, None)  # inserts a node for True
+        self._make(maxsize, None, None)  # inserts a node for False
+        self._make(maxsize, None, None)  # inserts a node for True
 
     # builds a structure from a Ite expression
     def build(self, expression):
@@ -62,14 +63,14 @@ class Robdd:
         inserting_f = (
             expression.f if expression.f_is_bool() else self._build(expression.f)
         )
-        return self.insert(expression.i, inserting_t, inserting_f)
+        return self.make(expression.i, inserting_t, inserting_f)
 
     # inserts nodes w/ redundancy check
     # Num i - variable number
     # Num t - variable number of the T child
     # Num f - variable number of the F child
-    def insert(self, i, t, f):
-
+    def make(self, i, t, f):
+        # this function coresponds to MK function in tutorial
         self.insert_variable(i)
         self.insert_attempts += 1
 
@@ -82,7 +83,7 @@ class Robdd:
         n = self.lookup(i, t, f)
 
         if n == None:
-            n = self._insert(i, t, f)
+            n = self._make(i, t, f)
             self.insert_distinct += 1
         return n
 
@@ -91,7 +92,7 @@ class Robdd:
             return
         self.variables.append(i)
 
-    def _insert(self, v, t, f):
+    def _make(self, v, t, f):
         index = len(self.items)
         self.items.append((v, t, f))
         self.inverse[(v, t, f)] = index
